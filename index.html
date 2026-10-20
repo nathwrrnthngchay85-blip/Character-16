@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meadow Flashcards · แฟลชการ์ดภาษาจีน</title>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#f8a5c2;--pink-d:#e0679a;--leaf:#6fbf73;--leaf-d:#3f8f4a;--cream:#fffaf2;--text:#4a3b47}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Mitr',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;
+  background:linear-gradient(180deg,#a8dcff 0%,#d9f0ff 38%,#fde7f1 72%,#fff4e0 100%)}
+
+/* ---------- ฉากหลัง ---------- */
+.sun{position:fixed;top:36px;right:8%;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,#fff8c9 0%,#ffe066 50%,rgba(255,224,102,0) 72%);
+  animation:pulse 5s ease-in-out infinite;z-index:0}
+@keyframes pulse{50%{transform:scale(1.1)}}
+.cloud{position:fixed;background:#fff;border-radius:100px;opacity:.85;z-index:0;animation:drift linear infinite}
+.cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:55%;height:170%;top:-75%;left:15%}
+.cloud::after{width:40%;height:130%;top:-50%;right:12%}
+@keyframes drift{from{transform:translateX(-300px)}to{transform:translateX(calc(100vw + 300px))}}
+.hills{position:fixed;bottom:0;left:0;width:100%;height:40vh;z-index:0}
+.grass{position:fixed;bottom:0;left:0;width:100%;height:24vh;z-index:1;pointer-events:none}
+.blade{position:absolute;bottom:-4px;border-radius:100% 0 0 0/100% 0 0 0;transform-origin:bottom center;animation:sway ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-7deg)}to{transform:rotate(8deg)}}
+.flower{position:absolute;bottom:-4px;transform-origin:bottom center;animation:sway ease-in-out infinite alternate;display:flex;flex-direction:column;align-items:center}
+.flower .head{line-height:1}
+.flower .stem{width:3px;background:linear-gradient(#5fae67,#3f8f4a);border-radius:2px}
+.petal{position:fixed;top:-30px;width:14px;height:10px;z-index:2;pointer-events:none;
+  background:linear-gradient(135deg,#ffe0ec,#f78fb3);border-radius:100% 0 100% 0;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--rot));opacity:.3}}
+.butterfly{position:fixed;font-size:26px;z-index:2;pointer-events:none;animation:flutter ease-in-out infinite}
+.butterfly span{display:inline-block;animation:wing .25s ease-in-out infinite alternate}
+@keyframes wing{to{transform:scaleX(.5)}}
+@keyframes flutter{0%{transform:translate(0,0)}25%{transform:translate(28vw,-10vh)}50%{transform:translate(55vw,6vh)}75%{transform:translate(22vw,14vh)}100%{transform:translate(0,0)}}
+
+/* ---------- ตัวแอป ---------- */
+.app{position:relative;z-index:3;max-width:760px;margin:0 auto;padding:22px 16px 160px}
+header{text-align:center;margin-bottom:16px}
+header h1{font-size:clamp(24px,5vw,34px);font-weight:500;color:#7a3d63;text-shadow:0 2px 0 #fff,0 4px 12px rgba(247,143,179,.4)}
+header p{font-size:14px;opacity:.75;margin-top:4px}
+.panel{background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.85);border-radius:24px;padding:14px;box-shadow:0 8px 30px rgba(120,80,110,.12)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{border:none;padding:7px 14px;border-radius:999px;background:#fff;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.08);transition:.25s;line-height:1.2}
+.chip small{display:block;font-size:10px;opacity:.7}
+.chip:hover{transform:translateY(-3px) rotate(-2deg)}
+.chip.active{background:linear-gradient(135deg,#f8a5c2,#ee7fae);color:#fff;transform:scale(1.06)}
+.chip.special{background:#eaf8e6}
+.chip.special.active{background:linear-gradient(135deg,#8fd694,#56b05f);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin-top:12px;font-size:14px}
+.switch{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.switch input{display:none}
+.slider{width:46px;height:26px;background:#ddd;border-radius:99px;position:relative;transition:.3s}
+.slider::after{content:'';position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.3s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.switch input:checked + .slider{background:var(--pink)}
+.switch input:checked + .slider::after{left:22px}
+.small-btn{border:none;background:#fff;border-radius:99px;padding:6px 12px;font-family:inherit;font-size:13px;cursor:pointer;color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.progress-wrap{margin:18px auto 0;max-width:460px}
+.progress-info{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+.bar{height:12px;background:rgba(255,255,255,.7);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;width:0;background:linear-gradient(90deg,#8fd694,#f8a5c2);border-radius:99px;transition:width .5s}
+
+/* ---------- การ์ด (แก้ไขสำหรับ Safari) ---------- */
+.scene{width:100%;max-width:460px;height:310px;margin:22px auto 0}
+.mover{width:100%;height:100%;-webkit-perspective:1300px;perspective:1300px}
+.mover.fly-right{animation:flyR .5s ease-in forwards}
+.mover.fly-left{animation:flyL .5s ease-in forwards}
+.mover.enter{animation:enter .45s ease-out}
+@keyframes flyR{to{transform:translate(130%,-30px) rotate(20deg);opacity:0}}
+@keyframes flyL{to{transform:translate(-130%,-30px) rotate(-20deg);opacity:0}}
+@keyframes enter{from{transform:translateY(40px) scale(.85);opacity:0}}
+.card{width:100%;height:100%;position:relative;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;cursor:pointer;
+  transform:rotateY(0deg);transition:transform .75s cubic-bezier(.4,.2,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+.card.no-anim{transition:none}
+.face{position:absolute;top:0;left:0;width:100%;height:100%;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:28px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;
+  background:var(--cream);border:4px solid #fff;overflow:hidden;box-shadow:0 20px 45px rgba(120,80,110,.25)}
+.face.front{transform:rotateY(0deg) translateZ(1px)}
+.face.back{transform:rotateY(180deg) translateZ(1px);background:linear-gradient(160deg,#fffaf2,#fde8f1)}
+.deco{position:absolute;font-size:30px;opacity:.85;pointer-events:none}
+.deco.tl{top:8px;left:10px}
+.deco.br{bottom:6px;right:10px}
+.deco.bl{bottom:8px;left:12px;font-size:22px;opacity:.6}
+.tag{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:12px;background:#eaf8e6;color:var(--leaf-d);padding:3px 12px;border-radius:99px;white-space:nowrap}
+.hanzi{font-family:'Noto Serif SC',serif;font-size:clamp(46px,12vw,82px);font-weight:700;color:#5b3a52;letter-spacing:4px}
+.hanzi.long{font-size:clamp(34px,9vw,56px)}
+.pinyin{font-size:clamp(22px,5vw,30px);color:var(--pink-d);font-weight:500}
+.meaning{font-size:clamp(16px,4vw,20px);margin-top:10px;line-height:1.5;max-width:90%}
+.sub-pinyin{font-size:18px;color:var(--pink-d);margin-top:6px}
+.hint{position:absolute;bottom:14px;font-size:12px;opacity:.45}
+.speak{position:absolute;top:10px;right:12px;border:none;background:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.1)}
+
+/* ---------- ปุ่ม ---------- */
+.actions{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;max-width:460px;margin:24px auto 0}
+.btn{border:none;border-radius:20px;padding:14px 10px;font-family:inherit;font-size:16px;cursor:pointer;transition:.2s;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.btn-no{background:linear-gradient(135deg,#ffc2d6,#f78fb3);color:#fff}
+.btn-yes{background:linear-gradient(135deg,#a8e6a3,#5cb85c);color:#fff}
+.btn-flip{background:#fff;color:var(--text);padding:14px 20px}
+.keys{text-align:center;font-size:12px;opacity:.6;margin-top:12px}
+.counts{display:flex;justify-content:center;gap:18px;margin-top:14px;font-size:15px}
+.counts span{background:rgba(255,255,255,.7);padding:4px 14px;border-radius:99px}
+
+/* ---------- หน้าสรุป ---------- */
+.result{display:none;text-align:center;margin-top:22px}
+.result.show{display:block;animation:enter .5s}
+.result h2{font-size:24px;font-weight:500;color:#7a3d63}
+.score{font-size:54px;font-weight:500;color:var(--leaf-d);margin:6px 0}
+.word-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+.word-pill{background:#fff;border-radius:14px;padding:6px 12px;font-size:13px}
+.word-pill b{font-family:'Noto Serif SC',serif;font-size:18px;color:#5b3a52;margin-right:4px}
+.result-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.hidden{display:none !important}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(120px);background:#fff;padding:10px 20px;border-radius:99px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:50;transition:.4s}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.burst{position:fixed;font-size:22px;pointer-events:none;z-index:40}
+#errorBox{display:none;position:fixed;top:10px;left:10px;right:10px;z-index:999;background:#ffe3e3;color:#a30000;border:2px solid #ff8a8a;border-radius:12px;padding:12px;font-size:14px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<div id="errorBox"></div>
+
+<div class="sun"></div>
+<div id="clouds"></div>
+<svg class="hills" viewBox="0 0 1440 400" preserveAspectRatio="none">
+  <path d="M0,200 C240,110 480,250 720,170 C960,90 1200,220 1440,150 L1440,400 L0,400Z" fill="#b8e6b0"/>
+  <path d="M0,260 C300,190 520,300 820,240 C1100,180 1280,280 1440,230 L1440,400 L0,400Z" fill="#94d68e"/>
+  <path d="M0,320 C260,280 600,350 900,310 C1150,280 1300,330 1440,300 L1440,400 L0,400Z" fill="#74c06f"/>
+</svg>
+<div class="grass" id="grass"></div>
+<div id="butterflies"></div>
+
+<main class="app">
+  <header>
+    <h1>🌸 ทุ่งดอกไม้ · แฟลชการ์ดภาษาจีน 🌿</h1>
+    <p>แตะการ์ดเพื่อพลิก · ฟังเสียงได้ด้วยปุ่ม 🔊</p>
+  </header>
+
+  <section class="panel">
+    <div class="chips" id="chips"></div>
+    <div class="controls">
+      <label class="switch">
+        <input type="checkbox" id="swapToggle">
+        <span class="slider"></span>
+        <span id="modeLabel">ด้านหน้า: ตัวจีน</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="shuffleToggle">
+        <span class="slider"></span>
+        <span>สุ่มลำดับ</span>
+      </label>
+      <button class="small-btn" id="resetBtn">🧹 ล้างความจำ</button>
+    </div>
+  </section>
+
+  <section id="study">
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="deckName">เซ็ต 1</span>
+        <span id="progressText">1 / 12</span>
+      </div>
+      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    </div>
+
+    <div class="scene">
+      <div class="mover" id="mover">
+        <div class="card" id="card">
+          <div class="face front" id="front">กำลังโหลด...</div>
+          <div class="face back" id="back"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-no" id="noBtn">🥀 จำไม่ได้</button>
+      <button class="btn btn-flip" id="flipBtn">🔄</button>
+      <button class="btn btn-yes" id="yesBtn">🌼 จำได้</button>
+    </div>
+    <div class="counts">
+      <span>🌼 จำได้ <b id="knownCount">0</b></span>
+      <span>🥀 จำไม่ได้ <b id="unknownCount">0</b></span>
+    </div>
+    <p class="keys">คีย์ลัด: Space = พลิก · → = จำได้ · ← = จำไม่ได้ · S = ฟังเสียง · มือถือปัดซ้าย/ขวาได้</p>
+  </section>
+
+  <section class="result panel" id="result">
+    <h2 id="resultTitle">เก่งมาก!</h2>
+    <div class="score" id="scoreText">0%</div>
+    <p id="resultMsg"></p>
+    <div class="word-list" id="unknownList"></div>
+    <div class="result-actions">
+      <button class="btn btn-no" id="reviewBtn">🥀 ทบทวนคำที่จำไม่ได้</button>
+      <button class="btn btn-flip" id="restartBtn">🔁 เริ่มใหม่</button>
+      <button class="btn btn-yes" id="nextBtn">🌱 เซ็ตถัดไป</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* แสดงข้อผิดพลาดบนหน้าจอ (ถ้ามี) */
+window.onerror = function(msg, src, line){
+  var box = document.getElementById('errorBox');
+  box.style.display = 'block';
+  box.textContent = 'เกิดข้อผิดพลาด: ' + msg + ' (บรรทัด ' + line + ')';
+};
+
+/* ================== คลังคำศัพท์ ================== */
+var SETS = [
+ [["冠军","guàn jūn","แชมป์, ผู้ชนะเลิศ"],["顶","dǐng","จุดสูงสุด, ยอด, (ลักษณะนาม) ใบ (หมวก)"],["项目","xiàng mù","โครงการ, รายการ"],["顺便","shùn biàn","ถือโอกาส, แวะทำ (ทางผ่าน)"],["顺利","shùn lì","ราบรื่น"],["顺手","shùn shǒu","สะดวกมือ, ถือโอกาส (หยิบ/ทำ)"],["通顺","tōng shùn","สละสลวย, ลื่นไหล (ใช้กับภาษา/บทความ)"],["一路顺风","yī lù shùn fēng","เดินทางโดยสวัสดิภาพ"],["颗","kē","(ลักษณะนาม) เม็ด, ดวง, ซี่"],["礼貌","lǐ mào","มารยาท, ความสุภาพ"],["面貌","miàn mào","หน้าตา, รูปลักษณ์, เค้าโครงหน้า"],["古代","gǔ dài","ยุคโบราณ"]],
+ [["古迹","gǔ jì","โบราณสถาน"],["古老","gǔ lǎo","เก่าแก่, โบราณ"],["古典","gǔ diǎn","คลาสสิก"],["万古长青","wàn gǔ cháng qīng","ยั่งยืนตลอดกาล (เหมือนต้นไม้ที่เขียวชอุ่มตลอดไป)"],["叶子","yè zi","ใบไม้"],["茶叶","chá yè","ใบชา"],["公司","gōng sī","บริษัท"],["司机","sī jī","คนขับรถ"],["司令","sī lìng","ผู้บัญชาการ"],["号召","hào zhào","ร้องเรียก, วิงวอน, เรียกร้อง"],["召开","zhào kāi","จัด(การประชุม), เรียกประชุม"],["召集","zhào jí","เรียกชุมนุม, ระดมพล"]],
+ [["电视台","diàn shì tái","สถานีโทรทัศน์"],["电台","diàn tái","สถานีวิทยุ"],["窗台","chuāng tái","ขอบหน้าต่าง"],["柜台","guì tái","เคาน์เตอร์"],["茅台酒","máo tái jiǔ","เหล้าเหมาไถ (สุราจีนชื่อดัง)"],["舞台","wǔ tái","เวที"],["吐","tǔ / tù","บ้วน, ถ่ม / อาเจียน"],["吓","xià / hè","ทำให้ตกใจ, หลอกให้กลัว"],["吊","diào","แขวน, ห้อย"],["舌头","shé tou","ลิ้น"],["呼吸","hū xī","หายใจ"],["吸收","xī shōu","ดูดซับ, ดูดซึม"]],
+ [["吸烟","xī yān","สูบบุหรี่"],["吸引","xī yǐn","ดึงดูด"],["吸取","xī qǔ","ซึมซับ, รับเอา (บทเรียน/ประสบการณ์)"],["呆","dāi","ทึ่ม, เหม่อลอย, อยู่/พัก"],["否定","fǒu dìng","ปฏิเสธ"],["否则","fǒu zé","มิฉะนั้น"],["是否","shì fǒu","ใช่หรือไม่, หรือไม่"],["吨","dūn","ตัน (หน่วยน้ำหนัก)"],["吵架","chǎo jià","ทะเลาะเบาะแว้ง"],["包含","bāo hán","ครอบคลุม, ประกอบด้วย"],["含糊","hán hu","คลุมเครือ, ไม่ชัดเจน"],["含量","hán liàng","ปริมาณที่มีอยู่, ส่วนประกอบ"]],
+ [["吩咐","fēn fù","สั่งการ, กำชับ"],["启发","qǐ fā","ให้ข้อคิด, จุดประกายความคิด"],["味道","wèi dào","รสชาติ"],["气味","qì wèi","กลิ่น"],["趣味","qù wèi","ความน่าสนใจ, รสนิยม"],["意味着","yì wèi zhe","หมายความว่า, สื่อถึง"],["嘱咐","zhǔ fù","กำชับ, สั่งเสีย"],["革命","gé mìng","ปฏิวัติ"],["命令","mìng lìng","คำสั่ง, ออกคำสั่ง"],["命运","mìng yùn","โชคชะตา"],["拼命","pīn mìng","เอาเป็นเอาตาย, สู้ตาย"],["生命","shēng mìng","ชีวิต"]],
+ [["寿命","shòu mìng","อายุขัย"],["呼吸","hū xī","หายใจ (คำซ้ำจากเซ็ต 3)"],["招呼","zhāo hu","ทักทาย, เรียก"],["称呼","chēng hu","เรียกขาน, คำเรียกขาน"],["打招呼","dǎ zhāo hu","ทักทาย"],["呼呼","hū hū","(เสียง) ลมพัด, เสียงหอบ"],["欢呼","huān hū","โห่ร้องด้วยความยินดี"],["产品","chǎn pǐn","ผลิตภัณฑ์"],["工艺品","gōng yì pǐn","งานศิลปหัตถกรรม"],["品种","pǐn zhǒng","สายพันธุ์, ชนิด"],["日用品","rì yòng pǐn","ของใช้ในชีวิตประจำวัน"],["商品","shāng pǐn","สินค้า"]],
+ [["食品","shí pǐn","อาหาร"],["作品","zuò pǐn","ผลงาน (ศิลปะ, วรรณกรรม)"],["品德","pǐn dé","ศีลธรรม, จริยธรรม"],["品质","pǐn zhì","คุณภาพ, คุณลักษณะ"],["物品","wù pǐn","สิ่งของ"],["药品","yào pǐn","ยา, เวชภัณฑ์"],["用品","yòng pǐn","ของใช้"],["咽","yàn","กลืน"],["咬","yǎo","กัด"],["哲学","zhé xué","ปรัชญา"],["喷","pēn","พ่น, ฉีด"],["改善","gǎi shàn","ปรับปรุงให้ดีขึ้น"]],
+ [["善于","shàn yú","เชี่ยวชาญ, ถนัดในด้าน..."],["能歌善舞","néng gē shàn wǔ","ร้องรำทำเพลงเก่ง"],["完善","wán shàn","ทำให้สมบูรณ์, สมบูรณ์แบบ"],["嗓子","sǎng zi","คอ, เสียง (ร้อง/พูด)"],["嚷","rǎng","ตะโกน, ร้องโวยวาย"],["甜","tián","หวาน"],["年龄","nián líng","อายุ"],["工龄","gōng líng","อายุงาน"],["汇款","huì kuǎn","โอนเงิน"],["款待","kuǎn dài","ต้อนรับขับสู้เป็นอย่างดี"],["欺骗","qī piàn","หลอกลวง"],["欺负","qī fu","รังแก, เอาเปรียบ"]],
+ [["歇","xiē","พักผ่อน"],["抱歉","bào qiàn","ขออภัย, รู้สึกผิด"],["道歉","dào qiàn","กล่าวขอโทษ"],["歉意","qiàn yì","ความรู้สึกขอโทษ/เสียใจ"],["既…也…","jì... yě...","ทั้ง... และ..."],["既…又…","jì... yòu...","ทั้ง... และ... (พร้อมๆ กัน)"],["既然","jì rán","ในเมื่อ... (ก็...)"],["职工","zhí gōng","พนักงาน, ลูกจ้าง"],["职业","zhí yè","อาชีพ"],["职员","zhí yuán","พนักงานบริษัท"],["聊","liáo","คุย, สนทนา"],["聊天儿","liáo tiānr","พูดคุยเล่น"]],
+ [["聪明","cōng ming","ฉลาด"],["眼泪","yǎn lèi","น้ำตา"],["矛盾","máo dùn","ความขัดแย้ง, ขัดแย้งกัน"],["自相矛盾","zì xiāng máo dùn","ขัดแย้งกันเองในตัว"],["盼望","pàn wàng","เฝ้ารอ, ตั้งตารอ"],["睁","zhēng","ลืม (ตา)"],["瞧","qiáo","มอง, ดู"],["臭","chòu","เหม็น"],["鼻子","bí zi","จมูก"],["耐心","nài xīn","ความอดทน, อดทน"],["耐用","nài yòng","ทนทาน"],["耐烦","nài fán","ทนรำคาญ (มักใช้ในรูปปฏิเสธ)"],["忍耐","rěn nài","อดทนอดกลั้น"]]
+];
+
+/* ================== ความจำ (ปลอดภัย ไม่พังถ้าบันทึกไม่ได้) ================== */
+var KEY = 'meadow-flash-v2';
+var store = null;
+try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); store = localStorage; } catch(e){ store = null; }
+var memory = {};
+try { memory = JSON.parse((store && store.getItem(KEY)) || '{}') || {}; } catch(e){ memory = {}; }
+function save(){ try { if (store) store.setItem(KEY, JSON.stringify(memory)); } catch(e){} }
+
+function uniq(arr){
+  var seen = {}, out = [];
+  arr.forEach(function(w){ if (!seen[w[0]]){ seen[w[0]] = 1; out.push(w); } });
+  return out;
+}
+function allWords(){ return uniq([].concat.apply([], SETS)); }
+
+/* ================== สถานะ ================== */
+var deck = [], idx = 0, flipped = false, busy = false;
+var swap = false, shuffle = false, currentKey = '0';
+var known = [], unknown = [];
+function $(id){ return document.getElementById(id); }
+var card, mover, front, back;
+
+/* ================== เลือกเซ็ต ================== */
+function buildChips(){
+  var reviewCount = allWords().filter(function(w){ return memory[w[0]] === 'unknown'; }).length;
+  var html = SETS.map(function(s, i){
+    var k = s.filter(function(w){ return memory[w[0]] === 'known'; }).length;
+    return '<button class="chip" data-k="' + i + '">เซ็ต ' + (i+1) + '<small>🌼 ' + k + '/' + s.length + '</small></button>';
+  }).join('');
+  html += '<button class="chip special" data-k="all">ทั้งหมด<small>' + allWords().length + ' คำ</small></button>';
+  html += '<button class="chip special" data-k="review">คำที่ยังจำไม่ได้<small>🥀 ' + reviewCount + ' คำ</small></button>';
+  $('chips').innerHTML = html;
+  var chips = document.querySelectorAll('.chip');
+  for (var i = 0; i < chips.length; i++){
+    (function(c){
+      if (c.getAttribute('data-k') === currentKey) c.classList.add('active');
+      c.onclick = function(){ startDeck(c.getAttribute('data-k')); };
+    })(chips[i]);
+  }
+}
+function getWords(key){
+  if (key === 'all') return allWords();
+  if (key === 'review') return allWords().filter(function(w){ return memory[w[0]] === 'unknown'; });
+  return SETS[parseInt(key, 10)] || [];
+}
+function deckLabel(key){
+  return key === 'all' ? 'ทุกเซ็ต' : key === 'review' ? 'ทบทวนคำที่จำไม่ได้' : 'เซ็ต ' + (parseInt(key,10) + 1);
+}
+function shuffled(a){
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random()*(i+1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+function startDeck(key){
+  var words = getWords(key);
+  if (!words.length){ toast('ยังไม่มีคำที่จำไม่ได้เลย เก่งมาก 🎉'); return; }
+  currentKey = key;
+  $('deckName').textContent = deckLabel(key);
+  startWith(words);
+  buildChips();
+}
+function startWith(words){
+  deck = shuffle ? shuffled(words) : words.slice();
+  idx = 0; known = []; unknown = []; busy = false;
+  $('study').classList.remove('hidden');
+  $('result').classList.remove('show');
+  resetFlip(); renderCard(); updateProgress(); playEnter();
+}
+function playEnter(){
+  mover.classList.remove('enter'); void mover.offsetWidth;
+  mover.classList.add('enter');
+  setTimeout(function(){ mover.classList.remove('enter'); }, 460);
+}
+
+/* ================== วาดการ์ด ================== */
+function renderCard(){
+  var w = deck[idx]; if (!w) return;
+  var hz = w[0], py = w[1], mean = w[2];
+  var cls = hz.length >= 4 ? 'hanzi long' : 'hanzi';
+  var sp = '<button class="speak" title="ฟังเสียง">🔊</button>';
+  var decoF = '<span class="deco tl">🌸</span><span class="deco br">🌿</span><span class="deco bl">🌼</span>';
+  var decoB = '<span class="deco tl">🌷</span><span class="deco br">🍃</span><span class="deco bl">🦋</span>';
+  var hint = '<span class="hint">แตะเพื่อพลิก ✿</span>';
+  var hanziSide = '<span class="tag">ตัวอักษรจีน</span><div class="' + cls + '">' + hz + '</div>';
+  var meanSide = '<span class="tag">พินอิน · คำแปล</span><div class="pinyin">' + py + '</div><div class="meaning">' + mean + '</div>';
+  if (!swap){
+    front.innerHTML = decoF + sp + hanziSide + hint;
+    back.innerHTML  = decoB + sp + meanSide + hint;
+  } else {
+    front.innerHTML = decoF + sp + meanSide + hint;
+    back.innerHTML  = decoB + sp + hanziSide + '<div class="sub-pinyin">' + py + '</div>' + hint;
+  }
+  var btns = document.querySelectorAll('.speak');
+  for (var i = 0; i < btns.length; i++){
+    btns[i].onclick = function(e){ e.stopPropagation(); speak(); };
+  }
+}
+function resetFlip(){
+  card.classList.add('no-anim');
+  card.classList.remove('flipped');
+  flipped = false;
+  void card.offsetWidth;
+  card.classList.remove('no-anim');
+}
+function flip(){
+  if (busy || idx >= deck.length) return;
+  flipped = !flipped;
+  card.classList.toggle('flipped', flipped);
+}
+function updateProgress(){
+  $('progressText').textContent = Math.min(idx+1, deck.length) + ' / ' + deck.length;
+  $('barFill').style.width = (idx / deck.length * 100) + '%';
+  $('knownCount').textContent = known.length;
+  $('unknownCount').textContent = unknown.length;
+}
+
+/* ================== จำได้ / จำไม่ได้ ================== */
+function answer(isKnown){
+  if (busy || idx >= deck.length || $('result').classList.contains('show')) return;
+  busy = true;
+  var w = deck[idx];
+  memory[w[0]] = isKnown ? 'known' : 'unknown';
+  save();
+  (isKnown ? known : unknown).push(w);
+  burst(isKnown);
+  mover.classList.add(isKnown ? 'fly-right' : 'fly-left');
+  updateProgress();
+  setTimeout(function(){
+    mover.classList.remove('fly-right', 'fly-left');
+    idx++;
+    if (idx >= deck.length){ $('barFill').style.width = '100%'; busy = false; showResult(); return; }
+    resetFlip(); renderCard(); updateProgress(); playEnter();
+    busy = false;
+  }, 480);
+}
+function showResult(){
+  $('study').classList.add('hidden');
+  $('result').classList.add('show');
+  var pct = Math.round(known.length / deck.length * 100);
+  $('scoreText').textContent = pct + '%';
+  $('resultTitle').textContent = pct === 100 ? '🌸 สุดยอด! ทุ่งดอกไม้บานสะพรั่ง 🌸' : pct >= 70 ? '🌼 เก่งมาก! ใกล้แล้ว' : '🌱 ค่อย ๆ เติบโตไปด้วยกันนะ';
+  $('resultMsg').textContent = 'จำได้ ' + known.length + ' คำ · จำไม่ได้ ' + unknown.length + ' คำ';
+  $('unknownList').innerHTML = unknown.map(function(w){ return '<span class="word-pill"><b>' + w[0] + '</b>' + w[1] + ' — ' + w[2] + '</span>'; }).join('');
+  $('reviewBtn').classList.toggle('hidden', unknown.length === 0);
+  var n = parseInt(currentKey, 10);
+  $('nextBtn').classList.toggle('hidden', !(!isNaN(n) && n < SETS.length - 1));
+  buildChips();
+  if (pct === 100) for (var i = 0; i < 40; i++) setTimeout(spawnPetal, i * 60);
+}
+
+/* ================== เสียงอ่าน ================== */
+function speak(){
+  try {
+    if (!('speechSynthesis' in window) || !deck[idx]) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(deck[idx][0].replace(/…/g, ''));
+    u.lang = 'zh-CN'; u.rate = 0.8;
+    speechSynthesis.speak(u);
+  } catch(e){ toast('อุปกรณ์นี้ไม่รองรับเสียงอ่าน'); }
+}
+
+function toast(msg){
+  var t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+/* ================== เอฟเฟกต์ ================== */
+function burst(good){
+  var r = card.getBoundingClientRect();
+  var cx = r.left + r.width/2, cy = r.top + r.height/2;
+  var icons = good ? ['🌸','🌼','🌷','✿','💮','🌺'] : ['🍂','🍃','💧'];
+  for (var i = 0; i < (good ? 14 : 7); i++){
+    (function(){
+      var s = document.createElement('span');
+      s.className = 'burst';
+      s.textContent = icons[Math.floor(Math.random()*icons.length)];
+      s.style.left = cx + 'px'; s.style.top = cy + 'px';
+      document.body.appendChild(s);
+      var ang = Math.random()*Math.PI*2, dist = 90 + Math.random()*120;
+      if (s.animate){
+        var a = s.animate([
+          { transform:'translate(-50%,-50%) scale(.3)', opacity:1 },
+          { transform:'translate(' + (Math.cos(ang)*dist - 20) + 'px,' + (Math.sin(ang)*dist - 20) + 'px) scale(1.2) rotate(' + Math.random()*360 + 'deg)', opacity:0 }
+        ], { duration: 900 + Math.random()*400, easing:'ease-out' });
+        a.onfinish = function(){ s.remove(); };
+      } else { setTimeout(function(){ s.remove(); }, 600); }
+    })();
+  }
+}
+function spawnPetal(){
+  var p = document.createElement('div');
+  p.className = 'petal';
+  p.style.left = Math.random()*100 + 'vw';
+  p.style.setProperty('--dx', (Math.random()*300 - 150) + 'px');
+  p.style.setProperty('--rot', (Math.random()*900 + 180) + 'deg');
+  p.style.animationDuration = (7 + Math.random()*6) + 's';
+  var sc = .6 + Math.random()*.8;
+  p.style.width = 14*sc + 'px'; p.style.height = 10*sc + 'px';
+  if (Math.random() < .3) p.style.background = 'linear-gradient(135deg,#fff,#ffd6e6)';
+  document.body.appendChild(p);
+  p.addEventListener('animationend', function(){ p.remove(); });
+}
+function buildScene(){
+  var clouds = $('clouds');
+  for (var i = 0; i < 5; i++){
+    var c = document.createElement('div');
+    c.className = 'cloud';
+    var w = 90 + Math.random()*110;
+    c.style.width = w + 'px'; c.style.height = w*0.35 + 'px';
+    c.style.top = (4 + Math.random()*28) + 'vh';
+    var d = 50 + Math.random()*50;
+    c.style.animationDuration = d + 's';
+    c.style.animationDelay = -Math.random()*d + 's';
+    clouds.appendChild(c);
+  }
+  var grass = $('grass');
+  var n = Math.min(200, Math.floor(window.innerWidth / 6));
+  var greens = [['#3f8f4a','#8fd694'],['#4c9f55','#a5e2a0'],['#357a3f','#7cc982']];
+  for (var j = 0; j < n; j++){
+    var b = document.createElement('div');
+    b.className = 'blade';
+    var g = greens[j % 3];
+    b.style.background = 'linear-gradient(to top,' + g[0] + ',' + g[1] + ')';
+    b.style.left = Math.random()*100 + '%';
+    b.style.height = (40 + Math.random()*100) + 'px';
+    b.style.width = (5 + Math.random()*5) + 'px';
+    b.style.animationDuration = (2 + Math.random()*2.5) + 's';
+    b.style.animationDelay = -Math.random()*3 + 's';
+    grass.appendChild(b);
+  }
+  var heads = ['🌸','🌼','🌷','🌺','💮','🌻'];
+  for (var k = 0; k < Math.floor(window.innerWidth / 55); k++){
+    var f = document.createElement('div');
+    f.className = 'flower';
+    f.style.left = Math.random()*97 + '%';
+    f.style.animationDuration = (2.5 + Math.random()*2) + 's';
+    f.style.animationDelay = -Math.random()*3 + 's';
+    f.innerHTML = '<span class="head" style="font-size:' + (18 + Math.random()*16) + 'px">' + heads[Math.floor(Math.random()*heads.length)] + '</span>' +
+                  '<span class="stem" style="height:' + (30 + Math.random()*70) + 'px"></span>';
+    grass.appendChild(f);
+  }
+  var bf = $('butterflies');
+  [['🦋','15vh','5vw',18],['🦋','45vh','70vw',22],['🐝','60vh','20vw',26]].forEach(function(x, i){
+    var el = document.createElement('div');
+    el.className = 'butterfly';
+    el.style.top = x[1]; el.style.left = x[2];
+    el.style.animationDuration = x[3] + 's';
+    el.style.animationDelay = (-i*5) + 's';
+    el.innerHTML = '<span>' + x[0] + '</span>';
+    bf.appendChild(el);
+  });
+  setInterval(spawnPetal, 650);
+}
+
+/* ================== เริ่มต้น ================== */
+function init(){
+  card = $('card'); mover = $('mover'); front = $('front'); back = $('back');
+
+  card.onclick = flip;
+  $('flipBtn').onclick = flip;
+  $('yesBtn').onclick = function(){ answer(true); };
+  $('noBtn').onclick = function(){ answer(false); };
+  $('reviewBtn').onclick = function(){ $('deckName').textContent = 'ทบทวนรอบนี้'; startWith(unknown.slice()); };
+  $('restartBtn').onclick = function(){ startDeck(currentKey); };
+  $('nextBtn').onclick = function(){ startDeck(String(parseInt(currentKey,10) + 1)); };
+
+  $('swapToggle').onchange = function(e){
+    swap = e.target.checked;
+    $('modeLabel').textContent = swap ? 'ด้านหน้า: พินอิน + คำแปล' : 'ด้านหน้า: ตัวจีน';
+    if (idx < deck.length){ resetFlip(); renderCard(); }
+  };
+  $('shuffleToggle').onchange = function(e){ shuffle = e.target.checked; startDeck(currentKey); };
+  $('resetBtn').onclick = function(){
+    var ok = true;
+    try { ok = confirm('ล้างประวัติจำได้/จำไม่ได้ทั้งหมดใช่ไหม?'); } catch(e){ ok = true; }
+    if (ok){ memory = {}; save(); buildChips(); toast('ล้างความจำเรียบร้อย 🌱'); }
+  };
+
+  document.addEventListener('keydown', function(e){
+    if (e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); flip(); }
+    else if (e.code === 'ArrowRight') answer(true);
+    else if (e.code === 'ArrowLeft') answer(false);
+    else if (e.code === 'KeyS') speak();
+  });
+
+  var tx = 0;
+  card.addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; }, {passive:true});
+  card.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 70) answer(dx > 0);
+  });
+
+  startDeck('0');               // แสดงการ์ดก่อน
+  try { buildScene(); } catch(e){} // ฉากหลังพังก็ไม่กระทบการ์ด
+  if (!store) toast('โหมดนี้บันทึกความจำไม่ได้ แต่ใช้งานได้ปกติ 🌿');
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
